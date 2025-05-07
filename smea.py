@@ -48,7 +48,7 @@ def to_d(x, sigma, denoised):
 
 # ---------------------下面这段复制到k_diffusion\sampling.py的最后面(我用的forge，别的我不知道)--------------------------------------------
 @torch.no_grad()
-def sample_smea(model, x, sigmas, extra_args=None, callback=None, disable=None, eta=1., s_noise=1., noise_sampler=None, alpha=0.5):
+def sample_spawner_smea(model, x, sigmas, extra_args=None, callback=None, disable=None, eta=1., s_noise=1., noise_sampler=None, alpha=0.5):
     print("Use Spawner SMEA")
     
     extra_args = {} if extra_args is None else extra_args
@@ -85,12 +85,12 @@ def sample_smea(model, x, sigmas, extra_args=None, callback=None, disable=None, 
     return x
 
 @torch.no_grad()
-def sample_smea_beta(model, x, sigmas,
-                     extra_args=None, callback=None, disable=None,
-                     eta=0.85,
-                     s_noise=1.0,
-                     noise_sampler=None,
-                     beta=0.55):
+def sample_spawner_smea_beta(model, x, sigmas,
+                             extra_args=None, callback=None, disable=None,
+                             eta=0.85,
+                             s_noise=1.0,
+                             noise_sampler=None,
+                             beta=0.55):
     print("Use Spawner SMEA beta")
     
     if not isinstance(sigmas, torch.Tensor):
@@ -143,16 +143,16 @@ def sample_smea_beta(model, x, sigmas,
     return x
 
 @torch.no_grad()
-def sample_smea_dyn_beta(model, x, sigmas,
-                         extra_args=None, callback=None, disable=None,
-                         eta_start=0.95,
-                         eta_end=0.70,
-                         eta_exponent=1.0,
-                         s_noise=1.0,
-                         noise_sampler=None,
-                         beta=0.55,
-                         sigma_max_for_dyn_eta=None
-                         ):
+def sample_spawner_smea_dyn_beta(model, x, sigmas,
+                                 extra_args=None, callback=None, disable=None,
+                                 eta_start=0.95,
+                                 eta_end=0.70,
+                                 eta_exponent=1.0,
+                                 s_noise=1.0,
+                                 noise_sampler=None,
+                                 beta=0.55,
+                                 sigma_max_for_dyn_eta=None
+                                 ):
     print("Use Spawner SMEA Dyn beta")
     
     if not isinstance(sigmas, torch.Tensor):
