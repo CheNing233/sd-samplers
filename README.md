@@ -89,6 +89,7 @@ $$\hat{x}_0^{\text{eff}(i)} = (1 - \beta) \hat{x}_0^{(i)} + \beta \hat{x}_0^{(i-
 However, instead of using a fixed $\eta$ for the ancestral step, this method calculates a `current_eta` value for each step $i$ based on the current noise level $\sigma_i$. The $\eta$ value interpolates between a starting value `eta_start` and an ending value `eta_end` based on the relative position of $\sigma_i$ in the noise schedule, potentially weighted by an exponent `eta_exponent`:
 
 $$\text{current\_sigma\_ratio} = \left(\frac{\sigma_i}{\sigma_{\text{max}}}\right)^{\text{eta\_exponent}}$$
+
 $$\text{current\_eta} = \text{eta\_end} + (\text{eta\_start} - \text{eta\_end}) \cdot \text{current\_sigma\_ratio}$$
 
 where $\sigma_{\text{max}}$ is the maximum noise level in the schedule (or a specified `sigma_max_for_dyn_eta`). The `current_sigma_ratio` is clamped between 0 and 1. This means $\eta$ will be closer to `eta_start` at high noise levels and closer to `eta_end` at low noise levels. The `eta_exponent` allows for controlling the curve of this interpolation.
