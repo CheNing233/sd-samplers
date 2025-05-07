@@ -49,7 +49,7 @@ def to_d(x, sigma, denoised):
 # ---------------------下面这段复制到k_diffusion\sampling.py的最后面(我用的forge，别的我不知道)--------------------------------------------
 @torch.no_grad()
 def sample_smea(model, x, sigmas, extra_args=None, callback=None, disable=None, eta=1., s_noise=1., noise_sampler=None, alpha=0.5):
-    print("Use Spwaner SMEA")
+    print("Use Spawner SMEA")
     
     extra_args = {} if extra_args is None else extra_args
     noise_sampler = default_noise_sampler(x) if noise_sampler is None else noise_sampler
@@ -91,7 +91,7 @@ def sample_smea_beta(model, x, sigmas,
                      s_noise=1.0,
                      noise_sampler=None,
                      beta=0.55):
-    print("Use Spwaner SMEA beta")
+    print("Use Spawner SMEA beta")
     
     if not isinstance(sigmas, torch.Tensor):
         sigmas = x.new_tensor(sigmas)
@@ -153,7 +153,7 @@ def sample_smea_dyn_beta(model, x, sigmas,
                          beta=0.55,
                          sigma_max_for_dyn_eta=None
                          ):
-    print("Use Spwaner SMEA Dyn beta")
+    print("Use Spawner SMEA Dyn beta")
     
     if not isinstance(sigmas, torch.Tensor):
         sigmas = x.new_tensor(sigmas)

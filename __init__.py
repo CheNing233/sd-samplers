@@ -7,13 +7,13 @@ if smea.BACKEND == "ComfyUI":
         from comfy.k_diffusion import sampling as k_diffusion_sampling
         from comfy.samplers import SAMPLER_NAMES
 
-        setattr(k_diffusion_sampling, "sample_spwaner_smea", sample_smea)
-        setattr(k_diffusion_sampling, "sample_spwaner_smea_beta", sample_smea_beta)
-        setattr(k_diffusion_sampling, "sample_spwaner_smea_dyn_beta", sample_smea_dyn_beta)
+        setattr(k_diffusion_sampling, "sample_spawner_smea", sample_smea)
+        setattr(k_diffusion_sampling, "sample_spawner_smea_beta", sample_smea_beta)
+        setattr(k_diffusion_sampling, "sample_spawner_smea_dyn_beta", sample_smea_dyn_beta)
 
-        SAMPLER_NAMES.append("spwaner_smea")
-        SAMPLER_NAMES.append("spwaner_smea_beta")
-        SAMPLER_NAMES.append("spwaner_smea_dyn_beta")
+        SAMPLER_NAMES.append("spawner_smea")
+        SAMPLER_NAMES.append("spawner_smea_beta")
+        SAMPLER_NAMES.append("spawner_smea_dyn_beta")
 
         smea.INITIALIZED = True
 
