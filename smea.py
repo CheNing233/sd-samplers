@@ -1,3 +1,7 @@
+from importlib import import_module
+import torch
+from tqdm.auto import trange
+
 sampling = None
 BACKEND = None
 INITIALIZED = False
@@ -17,9 +21,36 @@ if not BACKEND:
     except ImportError as _:
         pass
 
+def default_noise_sampler(x):
+    return lambda sigma, sigma_next: torch.randn_like(x)
+
+def get_ancestral_step(sigma_from, sigma_to, eta=1.):
+    """Calculates the noise level (sigma_down) to step down to and the amount
+    of noise to add (sigma_up) when doing an ancestral sampling step."""
+    if not eta:
+        return sigma_to, 0.
+    sigma_up = min(sigma_to, eta * (sigma_to ** 2 * (sigma_from ** 2 - sigma_to ** 2) / sigma_from ** 2) ** 0.5)
+    sigma_down = (sigma_to ** 2 - sigma_up ** 2) ** 0.5
+    return sigma_down, sigma_up
+
+def append_dims(x, target_dims):
+    """Appends dimensions to the end of a tensor until it has target_dims dimensions."""
+    dims_to_append = target_dims - x.ndim
+    if dims_to_append < 0:
+        raise ValueError(f'input has {x.ndim} dims but target_dims is {target_dims}, which is less')
+    return x[(...,) + (None,) * dims_to_append]
+
+
+def to_d(x, sigma, denoised):
+    """Converts a denoiser output to a Karras ODE derivative."""
+    return (x - denoised) / append_dims(sigma, x.ndim)
+
+
 # ---------------------下面这段复制到k_diffusion\sampling.py的最后面(我用的forge，别的我不知道)--------------------------------------------
 @torch.no_grad()
 def sample_smea(model, x, sigmas, extra_args=None, callback=None, disable=None, eta=1., s_noise=1., noise_sampler=None, alpha=0.5):
+    print("Use Spwaner SMEA")
+    
     extra_args = {} if extra_args is None else extra_args
     noise_sampler = default_noise_sampler(x) if noise_sampler is None else noise_sampler
     s_in = x.new_ones([x.shape[0]])
@@ -60,6 +91,8 @@ def sample_smea_beta(model, x, sigmas,
                      s_noise=1.0,
                      noise_sampler=None,
                      beta=0.55):
+    print("Use Spwaner SMEA beta")
+    
     if not isinstance(sigmas, torch.Tensor):
         sigmas = x.new_tensor(sigmas)
     if not (0.0 <= beta <= 1.0):
@@ -120,6 +153,8 @@ def sample_smea_dyn_beta(model, x, sigmas,
                          beta=0.55,
                          sigma_max_for_dyn_eta=None
                          ):
+    print("Use Spwaner SMEA Dyn beta")
+    
     if not isinstance(sigmas, torch.Tensor):
         sigmas = x.new_tensor(sigmas)
     if not (0.0 <= beta <= 1.0):

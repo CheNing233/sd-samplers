@@ -26,9 +26,9 @@ try:
                         for label, funcname, aliases, options in samplers_smea
                         if callable(funcname)
                     ]
-                    sampler_extra_params["sample_smea"] = ["s_churn", "s_tmin", "s_tmax", "s_noise"]
-                    sampler_extra_params["sample_smea_beta"] = ["s_churn", "s_tmin", "s_tmax", "s_noise"]
-                    sampler_extra_params["sample_smea_dyn_beta"] = ["s_churn", "s_tmin", "s_tmax", "s_noise"]
+                    sampler_extra_params["sample_spwaner_smea"] = ["s_churn", "s_tmin", "s_tmax", "s_noise"]
+                    sampler_extra_params["sample_spwaner_smea_beta"] = ["s_churn", "s_tmin", "s_tmax", "s_noise"]
+                    sampler_extra_params["sample_spwaner_smea_dyn_beta"] = ["s_churn", "s_tmin", "s_tmax", "s_noise"]
                     
                     sd_samplers.all_samplers.extend(samplers_data_smea)
                     sd_samplers.all_samplers_map = {x.name: x for x in sd_samplers.all_samplers}
