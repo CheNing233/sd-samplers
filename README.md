@@ -151,4 +151,5 @@ Future work should involve thorough experimental evaluation of these methods on 
 
 The methods described in this paper are based on the provided Python code snippets. The full implementation, including the `get_ancestral_step`, `to_d`, and `default_noise_sampler` functions, would be required for reproduction and further study.
 
+author@spawner1145
 ---
