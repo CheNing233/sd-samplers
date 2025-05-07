@@ -1,7 +1,7 @@
 # sd-samplers
 一些乱写的采样器，我是业余的菜鸡一只，如果有大佬有更好的思路请给我pr(
 
-# 咋用都在代码文件里的注释里写了，比较懒，不想写readme(
+# 咋用都在代码文件里的注释里写了，比较懒，不想写readme，不过如果你是forge或者comfyui这个仓库直接可以当成插件和自定义节点用(
 <p align="center">
     <img src="https://github.com/user-attachments/assets/d9490d19-f423-4bd6-92c8-95a41c843707" width="150" style="margin: 5px;">
     <img src="https://github.com/user-attachments/assets/24a45098-0fa2-452c-9a32-c70760fd24d2" width="150" style="margin: 5px;">
