@@ -37,17 +37,17 @@ Diffusion models have emerged as powerful generative models, achieving state-of-
 
 Sampling methods for diffusion models can broadly be categorized into methods based on ordinary differential equations (ODEs) and stochastic differential equations (SDEs) that the diffusion process can be mapped to [1, 2]. Ancestral sampling is a technique typically associated with SDE-based samplers or discrete-time approximations that involve adding noise at each step, offering a balance between sample quality and diversity compared to deterministic ODE solvers like DDIM [3]. The amount of noise added in ancestral sampling is often controlled by a parameter, commonly denoted as $\eta$ (eta), where $\eta=0$ corresponds to a deterministic DDIM-like step and $\eta=1$ corresponds to a DDPM-like step (when using appropriate noise schedules).
 
-This paper examines three closely related ancestral sampling implementations: `sample_spawner_smea`, `sample_spawner_smea_beta`, and `sample_spawner_smea_dyn_beta`. These methods introduce novel modifications focusing on how the model's prediction of the clean data ($x_0$) is utilized and how the $\eta$ parameter is determined across the sampling steps.
+This paper examines three closely related ancestral sampling implementations: `sample\_spawner\_smea`, `sample\_spawner\_smea\_beta`, and `sample\_spawner\_smea\_dyn\_beta`. These methods introduce novel modifications focusing on how the model's prediction of the clean data ($x_0$) is utilized and how the $\eta$ parameter is determined across the sampling steps.
 
 **2. Background: Ancestral Sampling**
 
-Ancestral sampling proceeds by iteratively denoising a sample $x_t$ corrupted with noise level $\sigma_t$ to obtain a sample $x_{t-\Delta t}$ with a lower noise level $\sigma_{t-\Delta t}$. A standard step involves predicting the clean data $\hat{x}_0$ from $x_t$ using the trained model. This prediction is then used to estimate the score or the direction of the reverse step. Unlike deterministic solvers which move directly towards the predicted $x_0$, ancestral sampling adds a controlled amount of noise at each step.
+Ancestral sampling proceeds by iteratively denoising a sample $x_i$ corrupted with noise level $\sigma_i$ to obtain a sample $x_{i+1}$ with a lower noise level $\sigma_{i+1}$. A standard step involves predicting the clean data $\hat{x}_0^{(i)}$ from $x_i$ using the trained model. This prediction is then used to estimate the score or the direction of the reverse step. Unlike deterministic solvers which move directly towards the predicted $x_0$, ancestral sampling adds a controlled amount of noise at each step.
 
 Given a noisy sample $x_i$ at noise level $\sigma_i$ and the model's prediction of the clean data $\hat{x}_0^{(i)}$, the direction $d_i$ can be computed as $d_i = (x_i - \hat{x}_0^{(i)}) / \sigma_i$. The update step often involves moving towards the predicted clean data direction, followed by adding noise:
 
-$x_{i+1} = x_i + d_i \cdot (\sigma_{\text{down}} - \sigma_i) + \text{noise} \cdot \sigma_{\text{up}}$
+$$x_{i+1} = x_i + d_i \cdot (\sigma_{\text{down}} - \sigma_i) + \text{noise} \cdot \sigma_{\text{up}}$$
 
-where $\sigma_{\text{down}}$ and $\sigma_{\text{up}}$ are components derived from $\sigma_i$, $\sigma_{i+1}$ (the next noise level), and the $\eta$ parameter, typically satisfying $\sigma_{\text{down}}^2 + \sigma_{\text{up}}^2 = \sigma_i^2 - \sigma_{i+1}^2$. The function `get_ancestral_step(sigma_i, sigma_{i+1}, eta)` likely calculates these $\sigma_{\text{down}}$ and $\sigma_{\text{up}}$ values.
+where $\sigma_{\text{down}}$ and $\sigma_{\text{up}}$ are components derived from $\sigma_i$, $\sigma_{i+1}$ (the next noise level), and the $\eta$ parameter, typically satisfying $\sigma_{\text{down}}^2 + \sigma_{\text{up}}^2 = \sigma_i^2 - \sigma_{i+1}^2$. The function `get\_ancestral\_step(sigma\_i, sigma\_{i+1}, eta)` likely calculates these $\sigma_{\text{down}}$ and $\sigma_{\text{up}}$ values.
 
 The methods presented here build upon this ancestral sampling framework by modifying how $\hat{x}_0^{(i)}$ is used in calculating $d_i$ and how $\eta$ is determined.
 
@@ -55,46 +55,45 @@ The methods presented here build upon this ancestral sampling framework by modif
 
 The three proposed sampling methods are variations of ancestral sampling that primarily differ in how the denoised estimate is processed and how the $\eta$ parameter is set.
 
-**3.1. SMEA with Alpha Blending (`sample_spawner_smea`)**
+**3.1. SMEA with Alpha Blending (`sample\_spawner\_smea`)**
 
 This method introduces a form of averaging the denoised estimates across consecutive steps. Instead of directly using the current step's denoised prediction $\hat{x}_0^{(i)}$ to compute the step direction, it computes an *effective* denoised estimate $\hat{x}_0^{\text{eff}(i)}$ by blending the current prediction with the prediction from the previous step, $\hat{x}_0^{(i-1)}$.
 
 The core update to the denoised estimate is:
 $$\hat{x}_0^{\text{eff}(i)} = (1 - \alpha) \hat{x}_0^{(i)} + \alpha \hat{x}_0^{(i-1)}$$
-where $\hat{x}_0^{(i)}$ is the output of the model at step $i$, and $\hat{x}_0^{(i-1)}$ is the model output from step $i-1$. The parameter $\alpha \in [0, 1]$ controls the weight given to the previous estimate. If $\alpha = 0$, this reduces to using only the current prediction, like standard ancestral sampling. If $\alpha > 0$, it incorporates information from the previous step's prediction. This averaging is applied only if `old_denoised` (representing $\hat{x}_0^{(i-1)}$) is available and the next noise level $\sigma_{i+1}$ is greater than 0 (i.e., not the final step).
+where $\hat{x}_0^{(i)}$ is the output of the model at step $i$, and $\hat{x}_0^{(i-1)}$ is the model output from step $i-1$. The parameter $\alpha \in [0, 1]$ controls the weight given to the previous estimate. If $\alpha = 0$, this reduces to using only the current prediction, like standard ancestral sampling. If $\alpha > 0$, it incorporates information from the previous step's prediction. This averaging is applied only if `old\_denoised` (representing $\hat{x}_0^{(i-1)}$) is available and the next noise level $\sigma_{i+1}$ is greater than 0 (i.e., not the final step).
 
 The step direction is then computed using this effective estimate:
 $$d_i = (x_i - \hat{x}_0^{\text{eff}(i)}) / \sigma_i$$
-The sampling proceeds with the standard ancestral update using `get_ancestral_step` with a fixed $\eta$ parameter and adding noise scaled by $\sigma_{\text{up}}$.
+The sampling proceeds with the standard ancestral update using `get\_ancestral\_step` with a fixed $\eta$ parameter and adding noise scaled by $\sigma_{\text{up}}$.
 
 The motivation behind averaging consecutive denoised estimates could be to smooth the sampling trajectory by reducing step-to-step variance in the model's prediction, potentially leading to more stable or higher-quality samples.
 
-**3.2. SMEA with Beta Parameterization (`sample_spawner_smea_beta`)**
+**3.2. SMEA with Beta Parameterization (`sample\_spawner\_smea\_beta`)**
 
 This method is structurally very similar to the alpha-blending SMEA but uses a parameter named `beta` instead of `alpha` for the blending weight, with a default value of 0.55 (compared to alpha's default of 0.5, although not explicitly shown in the first function signature, it's a common default). The blending formula is identical:
 
 $$\hat{x}_0^{\text{eff}(i)} = (1 - \beta) \hat{x}_0^{(i)} + \beta \hat{x}_0^{(i-1)}$$
-where $\beta \in [0, 1]$. The blending is also conditioned on `old_denoised_for_beta` being available and $\sigma_{i+1} < \sigma_i$ (moving to a lower noise level).
+where $\beta \in [0, 1]$. The blending is also conditioned on `old\_denoised\_for\_beta` being available and $\sigma_{i+1} < \sigma_i$ (moving to a lower noise level).
 
 This version fixes the $\eta$ parameter for the ancestral step to a default value of 0.85. The rest of the sampling process, including the calculation of $d_i$ using $\hat{x}_0^{\text{eff}(i)}$ and the ancestral update with noise addition, follows the standard approach based on the fixed $\eta$.
 
 This method appears to be a specific configuration or a slight variation of the alpha-blending SMEA, possibly tuned with specific default parameters ($\beta=0.55$, $\eta=0.85$).
 
-**3.3. SMEA with Dynamic Eta (`sample_spawner_smea_dyn_beta`)**
+**3.3. SMEA with Dynamic Eta (`sample\_spawner\_smea\_dyn\_beta`)**
 
-The third method combines the beta-parameterized SMEA denoised estimate blending with a *dynamic* $\eta$ parameter. The blending of consecutive denoised estimates using the $\beta$ parameter is identical to the `sample_spawner_smea_beta` method:
+The third method combines the beta-parameterized SMEA denoised estimate blending with a *dynamic* $\eta$ parameter. The blending of consecutive denoised estimates using the $\beta$ parameter is identical to the `sample\_spawner\_smea\_beta` method:
 
 $$\hat{x}_0^{\text{eff}(i)} = (1 - \beta) \hat{x}_0^{(i)} + \beta \hat{x}_0^{(i-1)}$$
 
-However, instead of using a fixed $\eta$ for the ancestral step, this method calculates a `current_eta` value for each step $i$ based on the current noise level $\sigma_i$. The $\eta$ value interpolates between a starting value `eta_start` and an ending value `eta_end` based on the relative position of $\sigma_i$ in the noise schedule, potentially weighted by an exponent `eta_exponent`:
+However, instead of using a fixed $\eta$ for the ancestral step, this method calculates a `current\_eta` value for each step $i$ based on the current noise level $\sigma_i$. The $\eta$ value interpolates between a starting value `eta\_start` and an ending value `eta\_end` based on the relative position of $\sigma_i$ in the noise schedule, potentially weighted by an exponent `eta\_exponent`:
 
 $$\text{current\_sigma\_ratio} = \left(\frac{\sigma_i}{\sigma_{\text{max}}}\right)^{\text{eta\_exponent}}$$
-
 $$\text{current\_eta} = \text{eta\_end} + (\text{eta\_start} - \text{eta\_end}) \cdot \text{current\_sigma\_ratio}$$
 
-where $\sigma_{\text{max}}$ is the maximum noise level in the schedule (or a specified `sigma_max_for_dyn_eta`). The `current_sigma_ratio` is clamped between 0 and 1. This means $\eta$ will be closer to `eta_start` at high noise levels and closer to `eta_end` at low noise levels. The `eta_exponent` allows for controlling the curve of this interpolation.
+where $\sigma_{\text{max}}$ is the maximum noise level in the schedule (or a specified `sigma\_max\_for\_dyn\_eta`). The `current\_sigma\_ratio` is clamped between 0 and 1. This means $\eta$ will be closer to `eta\_start` at high noise levels and closer to `eta\_end` at low noise levels. The `eta\_exponent` allows for controlling the curve of this interpolation.
 
-The `get_ancestral_step` function then uses this `current_eta` to determine $\sigma_{\text{down}}$ and $\sigma_{\text{up}}$, thus dynamically controlling the amount of noise added at each step. For example, setting `eta_start` higher than `eta_end` would lead to more stochasticity (more added noise) at the beginning of the sampling process (high $\sigma$) and more determinism towards the end (low $\sigma$).
+The `get\_ancestral\_step` function then uses this `current\_eta` to determine $\sigma_{\text{down}}$ and $\sigma_{\text{up}}$, thus dynamically controlling the amount of noise added at each step. For example, setting `eta\_start` higher than `eta\_end` would lead to more stochasticity (more added noise) at the beginning of the sampling process (high $\sigma$) and more determinism towards the end (low $\sigma$).
 
 This dynamic control over $\eta$ allows for fine-tuning the balance between sample diversity (higher $\eta$) and sample fidelity (lower $\eta$) throughout the denoising process, potentially exploiting the different characteristics of the model's predictions at various noise levels.
 
@@ -102,19 +101,19 @@ This dynamic control over $\eta$ allows for fine-tuning the balance between samp
 
 The three methods represent an evolution of ancestral sampling with specific enhancements:
 
-| Feature                     | `sample_spawner_smea`       | `sample_spawner_smea_beta`  | `sample_spawner_smea_dyn_beta` |
+| Feature                     | `sample\_spawner\_smea`       | `sample\_spawner\_smea\_beta`  | `sample\_spawner\_smea\_dyn\_beta` |
 | :-------------------------- | :-------------------------- | :-------------------------- | :----------------------------- |
 | Denoised Estimate Blending  | Alpha-weighted average      | Beta-weighted average       | Beta-weighted average          |
 | Blending Parameter Name     | `alpha`                     | `beta`                      | `beta`                         |
 | Blending Formula            | $(1-\alpha)\hat{x}_0^{(i)} + \alpha \hat{x}_0^{(i-1)}$ | $(1-\beta)\hat{x}_0^{(i)} + \beta \hat{x}_0^{(i-1)}$ | $(1-\beta)\hat{x}_0^{(i)} + \beta \hat{x}_0^{(i-1)}$ |
-| Eta Parameter               | Fixed (`eta` parameter)     | Fixed (default `eta=0.85`)  | Dynamic (`eta_start`, `eta_end`, `eta_exponent`) |
+| Eta Parameter               | Fixed (`eta` parameter)     | Fixed (default `eta=0.85`)  | Dynamic (`eta\_start`, `eta\_end`, `eta\_exponent`) |
 | Dynamic Eta based on Sigma  | No                          | No                          | Yes                            |
 
 The core innovation across these methods appears to be the "SMEA" concept – averaging the current and previous step's $x_0$ predictions. This can be seen as a form of momentum or smoothing applied to the predicted signal, potentially improving stability, especially if the model's predictions are noisy or inconsistent between adjacent steps.
 
 The introduction of `beta` in the second and third methods seems to be a re-parameterization or refinement of the alpha blending, perhaps with preferred default values derived from empirical tuning.
 
-The most significant addition in the third method is the dynamic $\eta$. This allows for a flexible sampling strategy where the level of stochasticity can be adapted to the noise level. For instance, a higher $\eta$ at high noise might help explore diverse modes, while a lower $\eta$ at low noise might refine details and improve fidelity. The `eta_exponent` provides further control over the profile of this dynamic adaptation.
+The most significant addition in the third method is the dynamic $\eta$. This allows for a flexible sampling strategy where the level of stochasticity can be adapted to the noise level. For instance, a higher $\eta$ at high noise might help explore diverse modes, while a lower $\eta$ at low noise might refine details and improve fidelity. The `eta\_exponent` provides further control over the profile of this dynamic adaptation.
 
 **5. Conclusion**
 
@@ -128,5 +127,9 @@ Future work should involve thorough experimental evaluation of these methods on 
 [2] Song, Y., Kingma, D. P., Ermon, S., Kumar, S., & Poole, B. (2021). Score-Based Generative Modeling through Stochastic Differential Equations. *arXiv preprint arXiv:2011.13456*.
 [3] Nichol, A. Q., & Dhariwal, P. (2021). Improved Denoising Diffusion Probabilistic Models. *arXiv preprint arXiv:2102.09672*.
 *(Note: These are placeholder references for common diffusion sampling concepts. Specific references for the SMEA technique or dynamic eta as implemented would be needed if they exist in prior work)*
+
+**Code Availability**
+
+The methods described in this paper are based on the provided Python code snippets. The full implementation, including the `get\_ancestral\_step`, `to\_d`, and `default\_noise\_sampler` functions, would be required for reproduction and further study.
 
 ---
