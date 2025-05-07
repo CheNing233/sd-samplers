@@ -9,6 +9,7 @@
     <img src="https://github.com/user-attachments/assets/582d26fe-3251-4a94-bb9b-efb604b692af" width="150" style="margin: 5px;">
     <img src="https://github.com/user-attachments/assets/a67788ff-f790-4337-9472-de9993152686" width="150" style="margin: 5px;">
 </p>
+
 先后依次是`euler，euler a，smea，smea beta，smea dyn beta`，注意`smea，smea beta，smea dyn beta`这三个我自己瞎jb写的，不代表novel ai官方逻辑，用的模型是noob eps 1.1
 
 具体参数
