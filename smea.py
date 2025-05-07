@@ -1,6 +1,56 @@
+from importlib import import_module
+import torch
+from tqdm.auto import trange
+
+sampling = None
+BACKEND = None
+INITIALIZED = False
+
+if not BACKEND:
+    try:
+        _ = import_module("modules.sd_samplers_kdiffusion")
+        sampling = import_module("k_diffusion.sampling")
+        BACKEND = "WebUI"
+    except ImportError as _:
+        pass
+
+if not BACKEND:
+    try:
+        sampling = import_module("comfy.k_diffusion.sampling")
+        BACKEND = "ComfyUI"
+    except ImportError as _:
+        pass
+
+def default_noise_sampler(x):
+    return lambda sigma, sigma_next: torch.randn_like(x)
+
+def get_ancestral_step(sigma_from, sigma_to, eta=1.):
+    """Calculates the noise level (sigma_down) to step down to and the amount
+    of noise to add (sigma_up) when doing an ancestral sampling step."""
+    if not eta:
+        return sigma_to, 0.
+    sigma_up = min(sigma_to, eta * (sigma_to ** 2 * (sigma_from ** 2 - sigma_to ** 2) / sigma_from ** 2) ** 0.5)
+    sigma_down = (sigma_to ** 2 - sigma_up ** 2) ** 0.5
+    return sigma_down, sigma_up
+
+def append_dims(x, target_dims):
+    """Appends dimensions to the end of a tensor until it has target_dims dimensions."""
+    dims_to_append = target_dims - x.ndim
+    if dims_to_append < 0:
+        raise ValueError(f'input has {x.ndim} dims but target_dims is {target_dims}, which is less')
+    return x[(...,) + (None,) * dims_to_append]
+
+
+def to_d(x, sigma, denoised):
+    """Converts a denoiser output to a Karras ODE derivative."""
+    return (x - denoised) / append_dims(sigma, x.ndim)
+
+
 # ---------------------下面这段复制到k_diffusion\sampling.py的最后面(我用的forge，别的我不知道)--------------------------------------------
 @torch.no_grad()
 def sample_smea(model, x, sigmas, extra_args=None, callback=None, disable=None, eta=1., s_noise=1., noise_sampler=None, alpha=0.5):
+    print("Use Spawner SMEA")
+    
     extra_args = {} if extra_args is None else extra_args
     noise_sampler = default_noise_sampler(x) if noise_sampler is None else noise_sampler
     s_in = x.new_ones([x.shape[0]])
@@ -41,6 +91,8 @@ def sample_smea_beta(model, x, sigmas,
                      s_noise=1.0,
                      noise_sampler=None,
                      beta=0.55):
+    print("Use Spawner SMEA beta")
+    
     if not isinstance(sigmas, torch.Tensor):
         sigmas = x.new_tensor(sigmas)
     if not (0.0 <= beta <= 1.0):
@@ -101,6 +153,8 @@ def sample_smea_dyn_beta(model, x, sigmas,
                          beta=0.55,
                          sigma_max_for_dyn_eta=None
                          ):
+    print("Use Spawner SMEA Dyn beta")
+    
     if not isinstance(sigmas, torch.Tensor):
         sigmas = x.new_tensor(sigmas)
     if not (0.0 <= beta <= 1.0):
@@ -162,48 +216,48 @@ def sample_smea_dyn_beta(model, x, sigmas,
     return x
 
 # ---------------------下面这段在modules\sd_samplers_kdiffusion.py对应位置改(我用的forge，别的我不知道)--------------------------------------------
-samplers_k_diffusion = [
-    ('DPM++ 2M', 'sample_dpmpp_2m', ['k_dpmpp_2m'], {'scheduler': 'karras'}),
-    ('DPM++ SDE', 'sample_dpmpp_sde', ['k_dpmpp_sde'], {'scheduler': 'karras', "second_order": True, "brownian_noise": True}),
-    ('DPM++ 2M SDE', 'sample_dpmpp_2m_sde', ['k_dpmpp_2m_sde'], {'scheduler': 'exponential', "brownian_noise": True}),
-    ('DPM++ 2M SDE Heun', 'sample_dpmpp_2m_sde', ['k_dpmpp_2m_sde_heun'], {'scheduler': 'exponential', "brownian_noise": True, "solver_type": "heun"}),
-    ('DPM++ 2S a', 'sample_dpmpp_2s_ancestral', ['k_dpmpp_2s_a'], {'scheduler': 'karras', "uses_ensd": True, "second_order": True}),
-    ('DPM++ 3M SDE', 'sample_dpmpp_3m_sde', ['k_dpmpp_3m_sde'], {'scheduler': 'exponential', 'discard_next_to_last_sigma': True, "brownian_noise": True}),
-    ('Euler a', 'sample_euler_ancestral', ['k_euler_a', 'k_euler_ancestral'], {"uses_ensd": True}),
-    ('Euler', 'sample_euler', ['k_euler'], {}),
-    ('LMS', 'sample_lms', ['k_lms'], {}),
-    ('Heun', 'sample_heun', ['k_heun'], {"second_order": True}),
-    ('DPM2', 'sample_dpm_2', ['k_dpm_2'], {'scheduler': 'karras', 'discard_next_to_last_sigma': True, "second_order": True}),
-    ('DPM2 a', 'sample_dpm_2_ancestral', ['k_dpm_2_a'], {'scheduler': 'karras', 'discard_next_to_last_sigma': True, "uses_ensd": True, "second_order": True}),
-    ('DPM fast', 'sample_dpm_fast', ['k_dpm_fast'], {"uses_ensd": True}),
-    ('DPM adaptive', 'sample_dpm_adaptive', ['k_dpm_ad'], {"uses_ensd": True}),
-    ('Restart', sd_samplers_extra.restart_sampler, ['restart'], {'scheduler': 'karras', "second_order": True}),
-    ('HeunPP2', 'sample_heunpp2', ['heunpp2'], {}),
-    ('IPNDM', 'sample_ipndm', ['ipndm'], {}),
-    ('IPNDM_V', 'sample_ipndm_v', ['ipndm_v'], {}),
-    ('DEIS', 'sample_deis', ['deis'], {}),
-    ('SMEA', 'sample_smea', ['k_smea'], {'scheduler': 'karras', "uses_ensd": True}),
-    ('SMEA (beta)','sample_smea_beta',['k_smea_nai', 'smea_b'],{'scheduler': 'karras', "uses_ensd": True}),
-    ('SMEA DYN (dyn_eta)','sample_smea_dyn_beta',['k_smea_dyn_nai', 'smea_dyn_e'],{'scheduler': 'karras',"uses_ensd": True}),
-]
+# samplers_k_diffusion = [
+#     ('DPM++ 2M', 'sample_dpmpp_2m', ['k_dpmpp_2m'], {'scheduler': 'karras'}),
+#     ('DPM++ SDE', 'sample_dpmpp_sde', ['k_dpmpp_sde'], {'scheduler': 'karras', "second_order": True, "brownian_noise": True}),
+#     ('DPM++ 2M SDE', 'sample_dpmpp_2m_sde', ['k_dpmpp_2m_sde'], {'scheduler': 'exponential', "brownian_noise": True}),
+#     ('DPM++ 2M SDE Heun', 'sample_dpmpp_2m_sde', ['k_dpmpp_2m_sde_heun'], {'scheduler': 'exponential', "brownian_noise": True, "solver_type": "heun"}),
+#     ('DPM++ 2S a', 'sample_dpmpp_2s_ancestral', ['k_dpmpp_2s_a'], {'scheduler': 'karras', "uses_ensd": True, "second_order": True}),
+#     ('DPM++ 3M SDE', 'sample_dpmpp_3m_sde', ['k_dpmpp_3m_sde'], {'scheduler': 'exponential', 'discard_next_to_last_sigma': True, "brownian_noise": True}),
+#     ('Euler a', 'sample_euler_ancestral', ['k_euler_a', 'k_euler_ancestral'], {"uses_ensd": True}),
+#     ('Euler', 'sample_euler', ['k_euler'], {}),
+#     ('LMS', 'sample_lms', ['k_lms'], {}),
+#     ('Heun', 'sample_heun', ['k_heun'], {"second_order": True}),
+#     ('DPM2', 'sample_dpm_2', ['k_dpm_2'], {'scheduler': 'karras', 'discard_next_to_last_sigma': True, "second_order": True}),
+#     ('DPM2 a', 'sample_dpm_2_ancestral', ['k_dpm_2_a'], {'scheduler': 'karras', 'discard_next_to_last_sigma': True, "uses_ensd": True, "second_order": True}),
+#     ('DPM fast', 'sample_dpm_fast', ['k_dpm_fast'], {"uses_ensd": True}),
+#     ('DPM adaptive', 'sample_dpm_adaptive', ['k_dpm_ad'], {"uses_ensd": True}),
+#     ('Restart', sd_samplers_extra.restart_sampler, ['restart'], {'scheduler': 'karras', "second_order": True}),
+#     ('HeunPP2', 'sample_heunpp2', ['heunpp2'], {}),
+#     ('IPNDM', 'sample_ipndm', ['ipndm'], {}),
+#     ('IPNDM_V', 'sample_ipndm_v', ['ipndm_v'], {}),
+#     ('DEIS', 'sample_deis', ['deis'], {}),
+#     ('SMEA', 'sample_smea', ['k_smea'], {'scheduler': 'karras', "uses_ensd": True}),
+#     ('SMEA (beta)','sample_smea_beta',['k_smea_nai', 'smea_b'],{'scheduler': 'karras', "uses_ensd": True}),
+#     ('SMEA DYN (dyn_eta)','sample_smea_dyn_beta',['k_smea_dyn_nai', 'smea_dyn_e'],{'scheduler': 'karras',"uses_ensd": True}),
+# ]
 # 相比原来加了    ('SMEA', 'sample_smea', ['k_smea'], {'scheduler': 'karras', "uses_ensd": True}),
     #('SMEA (beta)','sample_smea_beta',['k_smea_nai', 'smea_b'],{'scheduler': 'karras', "uses_ensd": True}),
     #('SMEA DYN (dyn_eta)','sample_smea_dyn_beta',['k_smea_dyn_nai', 'smea_dyn_e'],{'scheduler': 'karras',"uses_ensd": True}),
 
-sampler_extra_params = {
-    'sample_euler': ['s_churn', 's_tmin', 's_tmax', 's_noise'],
-    'sample_heun': ['s_churn', 's_tmin', 's_tmax', 's_noise'],
-    'sample_dpm_2': ['s_churn', 's_tmin', 's_tmax', 's_noise'],
-    'sample_dpm_fast': ['s_noise'],
-    'sample_dpm_2_ancestral': ['s_noise'],
-    'sample_dpmpp_2s_ancestral': ['s_noise'],
-    'sample_dpmpp_sde': ['s_noise'],
-    'sample_dpmpp_2m_sde': ['s_noise'],
-    'sample_dpmpp_3m_sde': ['s_noise'],
-    'sample_smea': ['s_noise', 'eta'],
-    'sample_smea_beta': ['eta', 's_noise', 'beta'],
-    'sample_smea_dyn_beta': ['eta_start', 'eta_end', 'eta_exponent', 's_noise', 'beta', 'sigma_max_for_dyn_eta'],
-}
+# sampler_extra_params = {
+#     'sample_euler': ['s_churn', 's_tmin', 's_tmax', 's_noise'],
+#     'sample_heun': ['s_churn', 's_tmin', 's_tmax', 's_noise'],
+#     'sample_dpm_2': ['s_churn', 's_tmin', 's_tmax', 's_noise'],
+#     'sample_dpm_fast': ['s_noise'],
+#     'sample_dpm_2_ancestral': ['s_noise'],
+#     'sample_dpmpp_2s_ancestral': ['s_noise'],
+#     'sample_dpmpp_sde': ['s_noise'],
+#     'sample_dpmpp_2m_sde': ['s_noise'],
+#     'sample_dpmpp_3m_sde': ['s_noise'],
+#     'sample_smea': ['s_noise', 'eta'],
+#     'sample_smea_beta': ['eta', 's_noise', 'beta'],
+#     'sample_smea_dyn_beta': ['eta_start', 'eta_end', 'eta_exponent', 's_noise', 'beta', 'sigma_max_for_dyn_eta'],
+# }
 # 相比原来加了    'sample_smea': ['s_noise', 'eta'],
     #'sample_smea_beta': ['eta', 's_noise', 'beta'],
     #'sample_smea_dyn_beta': ['eta_start', 'eta_end', 'eta_exponent', 's_noise', 'beta', 'sigma_max_for_dyn_eta'],
