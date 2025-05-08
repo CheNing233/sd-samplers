@@ -38,7 +38,7 @@ Steps: 28, Sampler: Spawner SMEA Dyn (beta), Schedule type: Automatic, CFG scale
     <img src="https://github.com/user-attachments/assets/46f2890d-b92d-44d0-a5ed-7b600a37b588" width="1000" style="margin: 5px;">
 </p>
 
-#### 如果你是comfyui:
+## 如果你是comfyui:
 
 `Step 3`: 打开comfy\samplers.py，并找到KSAMPLER_NAMES，大概在709行附近
 
@@ -56,7 +56,7 @@ KSAMPLER_NAMES = ["euler", "euler_cfg_pp", "euler_ancestral", "euler_ancestral_c
 ```
 然后就能用了
 
-#### 如果你是webui或者forge:
+## 如果你是webui或者forge:
 
 `Step 3`: 打开modules\sd_samplers_kdiffusion.py，并找到samplers_k_diffusion和sampler_extra_params这两个地方
 
