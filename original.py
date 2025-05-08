@@ -182,9 +182,9 @@ samplers_k_diffusion = [
     ('IPNDM', 'sample_ipndm', ['ipndm'], {}),
     ('IPNDM_V', 'sample_ipndm_v', ['ipndm_v'], {}),
     ('DEIS', 'sample_deis', ['deis'], {}),
-    ('Spawner SMEA', 'sample_spawner_smea', ['k_smea'], {'scheduler': 'karras', "uses_ensd": True}),
-    ('Spawner SMEA (beta)','sample_spawner_smea_beta',['k_smea_nai', 'smea_b'],{'scheduler': 'karras', "uses_ensd": True}),
-    ('Spawner SMEA Dyn (beta)','sample_spawner_smea_dyn_beta',['k_smea_dyn_nai', 'smea_dyn_e'],{'scheduler': 'karras',"uses_ensd": True}),
+    ('Spawner SMEA', 'sample_spawner_smea', ['k_smea'], {'scheduler': 'Simple', "uses_ensd": True}),
+    ('Spawner SMEA (beta)','sample_spawner_smea_beta',['k_smea_nai', 'smea_b'],{'scheduler': 'Simple', "uses_ensd": True}),
+    ('Spawner SMEA Dyn (beta)','sample_spawner_smea_dyn_beta',['k_smea_dyn_nai', 'smea_dyn_e'],{'scheduler': 'Simple',"uses_ensd": True}),
 ]
 # 相比原来加了    ('SMEA', 'sample_spawner_smea', ['k_smea'], {'scheduler': 'karras', "uses_ensd": True}),
     #('SMEA (beta)','sample_spawner_smea_beta',['k_smea_nai', 'smea_b'],{'scheduler': 'karras', "uses_ensd": True}),
