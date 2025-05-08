@@ -18,7 +18,7 @@ shiroko (blue archive),multiple girls,2girls,animal ears,shiroko terror (blue ar
 (artist:reoen:0.826446),artist:machi,(artist:ningen_mame:0.9),(artist:sho_(sho_lwlw):0.9),(artist:rhasta:0.9),(artist:wlop:0.7),(artist:ke-ta:0.6),(fkey:0.5),(tianliang duohe fangdongye:0.5),(hiten \(hitenkei\):0.6),best quality,amazing quality,(artist:onineko:0.826446),very aesthetic,
 masterpiece,year 2024,newest,highres,absurdres,
 Negative prompt: worst aesthetic,worst quality,old,early,low quality,bad quality,lowres,signature,username,bad id,bad twitter id,english commentary,logo,bad hands,mutated hands,mammal,anthro,furry,ambiguous_form,feral,semi-anthro,
-Steps: 28, Sampler: SMEA DYN (dyn_eta), Schedule type: Karras, CFG scale: 4.5, Seed: 114514, Size: 1024x1536, Model: noobaiXLNAIXL_epsilonPred11Version, Clip skip: 2, RNG: CPU, Version: f2.0.1v1.10.1-1.10.1
+Steps: 28, Sampler: Spawner SMEA Dyn (beta), Schedule type: Automatic, CFG scale: 4.5, Seed: 114514, Size: 1024x1536, Model: noobaiXLNAIXL_epsilonPred11Version, Clip skip: 2, RNG: CPU, Version: f2.0.1v1.10.1-1.10.1
 ```
 
 也许打算发论文，让grok指导给我水了一个先,要看原理的自己看吧(
