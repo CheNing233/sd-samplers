@@ -13,7 +13,7 @@
     <img src="https://github.com/user-attachments/assets/a67788ff-f790-4337-9472-de9993152686" width="150" style="margin: 5px;">
 </p>
 
-先后依次是`euler，euler a，smea，smea beta，smea dyn beta`，注意`smea，smea beta，smea dyn beta`这三个我自己瞎jb写的，不代表novel ai官方逻辑，用的模型是noob eps 1.1
+先后依次是`euler，euler a，smea，smea beta，smea dyn beta`，注意`smea，smea beta，smea dyn beta`这三个我自己瞎jb写的，不代表novel ai官方逻辑，用的模型是noob eps 1.1，这里的测试样例是手动加代码而不是插件的，如果你想要复现需要手动加代码(见original.py)
 
 具体参数
 ```
