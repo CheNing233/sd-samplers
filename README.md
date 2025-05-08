@@ -28,34 +28,34 @@ Steps: 28, Sampler: Spawner SMEA Dyn (beta), Schedule type: Automatic, CFG scale
 step.1: 打开repositories\k-diffusion\k_diffusion\sampling.py(<-这是普通webui，forge的话是k_diffusion\sampling.py)
 
 <p align="center">
-    <img src="https://github.com/user-attachments/assets/67abb38b-dfc0-463b-95b9-9e4585c59f27" width="150" style="margin: 5px;">
+    <img src="https://github.com/user-attachments/assets/67abb38b-dfc0-463b-95b9-9e4585c59f27" width="600" style="margin: 5px;">
 </p>
 
 step.2: 复制本仓库original.py中这条长横线前面的所有代码，并粘贴到sampling.py的末尾
 
 <p align="center">
-    <img src="https://github.com/user-attachments/assets/cc87f890-f422-4330-8966-a493255a2e48" width="150" style="margin: 5px;">
-    <img src="https://github.com/user-attachments/assets/46f2890d-b92d-44d0-a5ed-7b600a37b588" width="150" style="margin: 5px;">
+    <img src="https://github.com/user-attachments/assets/cc87f890-f422-4330-8966-a493255a2e48" width="600" style="margin: 5px;">
+    <img src="https://github.com/user-attachments/assets/46f2890d-b92d-44d0-a5ed-7b600a37b588" width="600" style="margin: 5px;">
 </p>
 
 Step 3: 打开modules\sd_samplers_kdiffusion.py，并找到samplers_k_diffusion和sampler_extra_params这两个地方
 
 <p align="center">
-    <img src="https://github.com/user-attachments/assets/5be7e824-a7f6-46f4-959e-13e12fba5e52" width="150" style="margin: 5px;">
-    <img src="https://github.com/user-attachments/assets/9b9045db-3bea-4e42-815b-c0ab59356692" width="150" style="margin: 5px;">
+    <img src="https://github.com/user-attachments/assets/5be7e824-a7f6-46f4-959e-13e12fba5e52" width="600" style="margin: 5px;">
+    <img src="https://github.com/user-attachments/assets/9b9045db-3bea-4e42-815b-c0ab59356692" width="600" style="margin: 5px;">
 </p>
 
 Step 4: original.py中找到对应部分，并替换原来modules\sd_samplers_kdiffusion.py的
 
 <p align="center">
-    <img src="https://github.com/user-attachments/assets/134664e0-d48a-4c2b-83c4-179d6447386d" width="150" style="margin: 5px;">
-    <img src="https://github.com/user-attachments/assets/502d2e09-c66f-40e6-9514-73cf70ad3d29" width="150" style="margin: 5px;">
+    <img src="https://github.com/user-attachments/assets/134664e0-d48a-4c2b-83c4-179d6447386d" width="600" style="margin: 5px;">
+    <img src="https://github.com/user-attachments/assets/502d2e09-c66f-40e6-9514-73cf70ad3d29" width="600" style="margin: 5px;">
 </p>
 
 Step 5: 启动webui或者forge，你将看到如图，带spawner开头的就是
 
 <p align="center">
-    <img src="https://github.com/user-attachments/assets/a3e2d798-32b4-454d-aff0-d679dc6d45ea" width="150" style="margin: 5px;">
+    <img src="https://github.com/user-attachments/assets/a3e2d798-32b4-454d-aff0-d679dc6d45ea" width="600" style="margin: 5px;">
 </p>
 
 也许打算发论文，让grok指导给我水了一个先,要看原理的自己看吧(
