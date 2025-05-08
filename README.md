@@ -3,7 +3,7 @@
 
 # 如果你是forge或者comfyui这个仓库直接可以当成插件和自定义节点用
 
-# 不过我发现直接当插件加和代码里面你手动加效果不一样，原因未知，我个人感觉还是直接手动加好一点，看original.py里面注释的提示，把代码加到相应的位置，具体我放在后面
+# 不过我发现直接当webui/forge插件加和代码里面你手动加效果不一样，原因未知，我个人感觉还是直接手动加好一点，看original.py里面注释的提示，把代码加到相应的位置，具体我放在后面，comfyui无此问题，放心把这个仓库放入custom_nodes文件夹食用
 
 <p align="center">
     <img src="https://github.com/user-attachments/assets/d9490d19-f423-4bd6-92c8-95a41c843707" width="150" style="margin: 5px;">
