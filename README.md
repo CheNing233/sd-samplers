@@ -2,6 +2,9 @@
 一些乱写的smea(?)采样器，我是业余的菜鸡一只，如果有大佬有更好的思路请给我pr(
 
 # 咋用都在代码文件里的注释里写了，比较懒，不想写readme，不过如果你是webui forge或者comfyui这个仓库直接可以当成插件和自定义节点用(
+
+# 不过我发现直接当插件加和代码里面你手动加效果不一样，原因未知，我个人感觉还是直接手动加好一点，看original.py里面注释的提示，把代码加到相应的位置
+
 <p align="center">
     <img src="https://github.com/user-attachments/assets/d9490d19-f423-4bd6-92c8-95a41c843707" width="150" style="margin: 5px;">
     <img src="https://github.com/user-attachments/assets/24a45098-0fa2-452c-9a32-c70760fd24d2" width="150" style="margin: 5px;">
