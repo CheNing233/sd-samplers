@@ -16,9 +16,9 @@ try:
             def __init__(self):
                 if not smea.INITIALIZED:
                     samplers_smea = [
-                        ("Spawner SMEA", sample_spawner_smea, ["k_spawner_smea"], {'scheduler': 'Karras', "uses_ensd": True}),
-                        ("Spawner SMEA (beta)", sample_spawner_smea_beta, ["k_spawner_smea_beta"], {'scheduler': 'Karras', "uses_ensd": True}),
-                        ("Spawner SMEA Dyn (beta)", sample_spawner_smea_dyn_beta, ["k_spawner_smea_dyn_beta"], {'scheduler': 'Karras',"uses_ensd": True}),
+                        ("Spawner SMEA", sample_spawner_smea, ["k_spawner_smea"], {"uses_ensd": True}),
+                        ("Spawner SMEA (beta)", sample_spawner_smea_beta, ["k_spawner_smea_beta"], {"uses_ensd": True}),
+                        ("Spawner SMEA Dyn (beta)", sample_spawner_smea_dyn_beta, ["k_spawner_smea_dyn_beta"], {"uses_ensd": True}),
                     ]
                     samplers_data_smea = [
                         sd_samplers_common.SamplerData(label, lambda model, funcname=funcname: KDiffusionSampler(funcname, model), aliases, options)
