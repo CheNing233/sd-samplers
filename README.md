@@ -15,6 +15,18 @@
 
 先后依次是`euler，euler a，Spawner SMEA，Spawner SMEA (beta)，Spawner SMEA Dyn (beta)`，注意`Spawner SMEA，Spawner SMEA (beta)，Spawner SMEA Dyn (beta)`这三个我自己瞎jb写的，不代表novel ai官方逻辑，用的模型是noob eps 1.1，这里的测试样例是手动加代码而不是插件的，如果你想要复现需要手动加代码(见original.py)，调度器如果想要轮廓分明推荐simple，如果想要羽化边缘的感觉用karras，不过你webui用automatic也行(
 
+在上述采样器外，还有`Spawner SMEA Dyn (beta1)`，相比于`Spawner SMEA Dyn (beta)`，对一些参数进行了微调，具体来说：增加 eta_start 和减少 eta_end ：将 eta_start 设置为 0.98，eta_end 设置为 0.65。这会在采样初期增加更多随机性（探索更多可能性），而在后期减少随机性（更精确地细化细节）。调整 eta_exponent 为1.5，这会使从高噪声到低噪声的过渡更加陡峭，可能会产生更清晰的细节。在问卷调查中，普遍出现了`Spawner SMEA Dyn (beta1)`优于`Spawner SMEA Dyn (beta)`的反馈，证明猜想也许是正确的，未来你可以自行修改采样器参数，具体来说：
+```
+eta_start 和 eta_end：这两个参数控制采样过程中噪声添加的量
+eta_start 控制采样初期的噪声量
+eta_end 控制采样后期的噪声量
+eta_exponent：控制从 eta_start 到 eta_end 的过渡曲线
+增大这个值会使过渡更加陡峭
+beta：控制连续去噪估计的混合比例
+这个参数影响当前步骤和前一步骤的去噪估计的混合
+s_noise：控制添加噪声的整体缩放
+```
+
 具体参数
 ```
 shiroko (blue archive),multiple girls,2girls,animal ears,shiroko terror (blue archive),wolf ears,v,breasts,halo,cross hair ornament,grey hair,mismatched pupils,animal ear fluff,gloves,blue eyes,extra ears,cleavage,double v,black choker,hair ornament,long hair,choker,scarf,white background,jacket,long sleeves,simple background,black gloves,looking at viewer,large breasts,black dress,dress,green gloves,hair between eyes,blue scarf,closed mouth,hand on another's chin,school uniform,blazer,diamond-shaped pupils,ahoge,upper body,medium hair,broken halo,cheek squash,collarbone,black jacket,pout,diamond (shape),blush,buttoned cuffs,dual persona,shirt,
