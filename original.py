@@ -161,6 +161,77 @@ def sample_spawner_smea_dyn_beta(model, x, sigmas,
             
     return x
 
+@torch.no_grad()
+def sample_spawner_smea_dyn_beta1(model, x, sigmas,
+                         extra_args=None, callback=None, disable=None,
+                         eta_start=0.98,
+                         eta_end=0.65,
+                         eta_exponent=1.5,
+                         s_noise=1.0,
+                         noise_sampler=None,
+                         beta=0.55,
+                         sigma_max_for_dyn_eta=None
+                         ):
+    if not isinstance(sigmas, torch.Tensor):
+        sigmas = x.new_tensor(sigmas)
+    if not (0.0 <= beta <= 1.0):
+        raise ValueError("Parameter 'beta' must be between 0.0 and 1.0.")
+    if not (0.0 <= eta_start <= 1.0) or not (0.0 <= eta_end <= 1.0):
+        raise ValueError("eta_start and eta_end must be between 0.0 and 1.0.")
+
+    extra_args = extra_args or {}
+    noise_sampler = noise_sampler or default_noise_sampler(x)
+    
+    s_in = x.new_ones([x.shape[0]])
+    
+    old_denoised_for_beta = None
+    
+    actual_sigma_max = sigma_max_for_dyn_eta if sigma_max_for_dyn_eta is not None else sigmas[0].item()
+    if actual_sigma_max <= 0:
+        actual_sigma_max = 1.0 
+
+    for i in trange(len(sigmas) - 1, disable=disable):
+        sigma_current = sigmas[i]
+        sigma_next_actual = sigmas[i+1]
+
+        current_sigma_ratio = (sigma_current.item() / actual_sigma_max) ** eta_exponent
+        current_sigma_ratio = max(0.0, min(1.0, current_sigma_ratio))
+        current_eta = eta_end + (eta_start - eta_end) * current_sigma_ratio
+        current_eta = max(0.0, min(1.0, current_eta))
+
+        sigma_for_model = sigma_current * s_in
+        denoised_at_current_sigma = model(x, sigma_for_model, **extra_args)
+
+        if old_denoised_for_beta is not None and beta > 0.0 and sigma_next_actual < sigma_current:
+            effective_x0_hat = (1 - beta) * denoised_at_current_sigma + beta * old_denoised_for_beta
+        else:
+            effective_x0_hat = denoised_at_current_sigma
+        
+        old_denoised_for_beta = denoised_at_current_sigma
+
+        d = to_d(x, sigma_current, effective_x0_hat)
+        
+        sigma_down_float, sigma_up_float = get_ancestral_step(sigma_current.item(), sigma_next_actual.item(), eta=current_eta)
+        sigma_down = x.new_tensor(sigma_down_float)
+        sigma_up = x.new_tensor(sigma_up_float)
+        
+        if callback is not None:
+            callback_dict = {
+                'x': x, 'i': i, 'sigma': sigma_current, 'sigma_hat': sigma_current, 
+                'denoised': denoised_at_current_sigma, 'current_eta': current_eta
+            }
+            if old_denoised_for_beta is not None and beta > 0.0 and 'effective_x0_hat' in locals() and effective_x0_hat is not denoised_at_current_sigma:
+                 callback_dict['effective_denoised'] = effective_x0_hat
+            callback(callback_dict)
+
+        x = x + d * (sigma_down - sigma_current)
+
+        if sigma_up > 0:
+            added_noise = noise_sampler(sigma_current, sigma_next_actual)
+            x = x + added_noise * s_noise * sigma_up
+            
+    return x
+
 # ---------------------下面这段在modules\sd_samplers_kdiffusion.py对应位置改(我用的forge，别的我不知道)--------------------------------------------
 samplers_k_diffusion = [
     ('DPM++ 2M', 'sample_dpmpp_2m', ['k_dpmpp_2m'], {'scheduler': 'karras'}),
@@ -185,6 +256,7 @@ samplers_k_diffusion = [
     ('Spawner SMEA', 'sample_spawner_smea', ['k_smea'], {"uses_ensd": True}),
     ('Spawner SMEA (beta)','sample_spawner_smea_beta',['k_smea_nai', 'smea_b'],{"uses_ensd": True}),
     ('Spawner SMEA Dyn (beta)','sample_spawner_smea_dyn_beta',['k_smea_dyn_nai', 'smea_dyn_e'],{"uses_ensd": True}),
+    ('Spawner SMEA Dyn (beta_ep1)','sample_spawner_smea_dyn_beta1',['k_smea_dyn_nai1', 'smea_dyn_e1'],{"uses_ensd": True}),
 ]
 # 相比原来加了    ('SMEA', 'sample_spawner_smea', ['k_smea'], {"uses_ensd": True}),
     #('SMEA (beta)','sample_spawner_smea_beta',['k_smea_nai', 'smea_b'],{"uses_ensd": True}),
@@ -203,6 +275,7 @@ sampler_extra_params = {
     'sample_spawner_smea': ['s_noise', 'eta'],
     'sample_spawner_smea_beta': ['eta', 's_noise', 'beta'],
     'sample_spawner_smea_dyn_beta': ['eta_start', 'eta_end', 'eta_exponent', 's_noise', 'beta', 'sigma_max_for_dyn_eta'],
+    'sample_spawner_smea_dyn_beta1': ['eta_start', 'eta_end', 'eta_exponent', 's_noise', 'beta', 'sigma_max_for_dyn_eta'],
 }
 # 相比原来加了    'sample_spawner_smea': ['s_noise', 'eta'],
     #'sample_spawner_smea_beta': ['eta', 's_noise', 'beta'],
