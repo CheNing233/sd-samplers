@@ -15,7 +15,7 @@
 
 先后依次是`euler，euler a，Spawner SMEA，Spawner SMEA (beta)，Spawner SMEA Dyn (beta)`，注意`Spawner SMEA，Spawner SMEA (beta)，Spawner SMEA Dyn (beta)`这三个我自己瞎jb写的，不代表novel ai官方逻辑，用的模型是noob eps 1.1，这里的测试样例是手动加代码而不是插件的，如果你想要复现需要手动加代码(见original.py)，调度器如果想要轮廓分明推荐simple，如果想要羽化边缘的感觉用karras，不过你webui用automatic也行(
 
-在上述采样器外，还有`Spawner SMEA Dyn (beta1)`，相比于`Spawner SMEA Dyn (beta)`，对一些参数进行了微调，具体来说：增加 eta_start 和减少 eta_end ：将 eta_start 设置为 0.98，eta_end 设置为 0.65。这会在采样初期增加更多随机性（探索更多可能性），而在后期减少随机性（更精确地细化细节）。调整 eta_exponent 为1.5，这会使从高噪声到低噪声的过渡更加陡峭，可能会产生更清晰的细节。在问卷调查中，普遍出现了`Spawner SMEA Dyn (beta1)`优于`Spawner SMEA Dyn (beta)`的反馈，证明猜想也许是正确的，未来你可以自行修改采样器参数，具体来说：
+在上述采样器外，还有`Spawner SMEA Dyn (beta1)`，相比于`Spawner SMEA Dyn (beta)`，对一些参数进行了微调，具体来说：增加 eta_start 和减少 eta_end ：将 eta_start 设置为 0.98，eta_end 设置为 0.65。这会在采样初期增加更多随机性（探索更多可能性），而在后期减少随机性（更精确地细化细节）。调整 eta_exponent 为1.5，这会使从高噪声到低噪声的过渡更加陡峭，可能会产生更清晰的细节。在问卷调查中，普遍出现了`Spawner SMEA Dyn (beta1)`优于`Spawner SMEA Dyn (beta)`的反馈，未来你可以自行修改采样器参数，具体来说：
 ```
 eta_start 和 eta_end：这两个参数控制采样过程中噪声添加的量
 eta_start 控制采样初期的噪声量
