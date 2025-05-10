@@ -256,7 +256,7 @@ samplers_k_diffusion = [
     ('Spawner SMEA', 'sample_spawner_smea', ['k_smea'], {"uses_ensd": True}),
     ('Spawner SMEA (beta)','sample_spawner_smea_beta',['k_smea_nai', 'smea_b'],{"uses_ensd": True}),
     ('Spawner SMEA Dyn (beta)','sample_spawner_smea_dyn_beta',['k_smea_dyn_nai', 'smea_dyn_e'],{"uses_ensd": True}),
-    ('Spawner SMEA Dyn (beta_ep1)','sample_spawner_smea_dyn_beta1',['k_smea_dyn_nai1', 'smea_dyn_e1'],{"uses_ensd": True}),
+    ('Spawner SMEA Dyn (beta1)','sample_spawner_smea_dyn_beta1',['k_smea_dyn_nai1', 'smea_dyn_e1'],{"uses_ensd": True}),
 ]
 # 相比原来加了    ('SMEA', 'sample_spawner_smea', ['k_smea'], {"uses_ensd": True}),
     #('SMEA (beta)','sample_spawner_smea_beta',['k_smea_nai', 'smea_b'],{"uses_ensd": True}),
