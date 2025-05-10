@@ -1,5 +1,5 @@
 from . import smea
-from .smea import sample_spawner_smea, sample_spawner_smea_beta, sample_spawner_smea_dyn_beta
+from .smea import sample_spawner_smea, sample_spawner_smea_beta, sample_spawner_smea_dyn_beta, sample_spawner_smea_dyn_beta1
 
 
 if smea.BACKEND == "ComfyUI":
@@ -10,10 +10,12 @@ if smea.BACKEND == "ComfyUI":
         setattr(k_diffusion_sampling, "sample_spawner_smea", sample_spawner_smea)
         setattr(k_diffusion_sampling, "sample_spawner_smea_beta", sample_spawner_smea_beta)
         setattr(k_diffusion_sampling, "sample_spawner_smea_dyn_beta", sample_spawner_smea_dyn_beta)
+        setattr(k_diffusion_sampling, "sample_spawner_smea_dyn_beta1", sample_spawner_smea_dyn_beta1)
 
         SAMPLER_NAMES.append("spawner_smea")
         SAMPLER_NAMES.append("spawner_smea_beta")
         SAMPLER_NAMES.append("spawner_smea_dyn_beta")
+        SAMPLER_NAMES.append("spawner_smea_dyn_beta1")
 
         smea.INITIALIZED = True
 
