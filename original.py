@@ -254,8 +254,9 @@ def sample_spawner_rk2_smea_d_clamp(model, x, sigmas, extra_args=None, callback=
     min_blur_sigma (float): 最小模糊强度。确保在采样末端，模糊矫正不会完全消失
                              这是对抗“末端突变”的关键。0.05-0.2
     """
+    extra_args = {} if extra_args is None else extra_args
     seed = extra_args.get("seed", None)
-    extra_args = extra_args or {}; noise_sampler = noise_sampler or default_noise_sampler(x,seed=seed)
+    noise_sampler = noise_sampler or default_noise_sampler(x,seed=seed)
     s_in = x.new_ones([x.shape[0]]); old_denoised_blurred = None; max_sigma = float(sigmas[0]) if len(sigmas) > 0 else 0
     
     for i in trange(len(sigmas) - 1, disable=disable):
