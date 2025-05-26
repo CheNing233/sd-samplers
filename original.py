@@ -232,6 +232,64 @@ def sample_spawner_smea_dyn_beta1(model, x, sigmas,
             
     return x
 
+import torch.nn.functional as F
+import numpy
+
+def gaussian_blur(image, sigma, kernel_size=5):
+    if sigma == 0: return image
+    x_cord = torch.arange(kernel_size); x_grid = x_cord.repeat(kernel_size).view(kernel_size, kernel_size)
+    y_grid = x_grid.t(); xy_grid = torch.stack([x_grid, y_grid], dim=-1)
+    mean = (kernel_size - 1)/2.; variance = sigma**2.
+    gaussian_kernel = (1./(2.*numpy.pi*variance)) * torch.exp(-torch.sum((xy_grid - mean)**2., dim=-1) / (2*variance))
+    gaussian_kernel = gaussian_kernel / torch.sum(gaussian_kernel)
+    kernel = gaussian_kernel.view(1, 1, kernel_size, kernel_size).repeat(image.shape[1], 1, 1, 1)
+    return F.conv2d(image, kernel.to(image.device, image.dtype), padding=kernel_size//2, groups=image.shape[1])
+
+@torch.no_grad()
+def sample_spawner_rk2_smea_d_clamp(model, x, sigmas, extra_args=None, callback=None, disable=None, 
+                           eta=0.3, s_noise=1.0, noise_sampler=None,
+                           beta=0.4, 
+                           blur_sigma=0.8, blur_schedule_power=2.5, min_blur_sigma=0.1):
+    """
+    min_blur_sigma (float): 最小模糊强度。确保在采样末端，模糊矫正不会完全消失
+                             这是对抗“末端突变”的关键。0.05-0.2
+    """
+    seed = extra_args.get("seed", None)
+    extra_args = extra_args or {}; noise_sampler = noise_sampler or default_noise_sampler(x,seed=seed)
+    s_in = x.new_ones([x.shape[0]]); old_denoised_blurred = None; max_sigma = float(sigmas[0]) if len(sigmas) > 0 else 0
+    
+    for i in trange(len(sigmas) - 1, disable=disable):
+        sigma_from, sigma_to = sigmas[i], sigmas[i+1]
+        if sigma_from == 0: continue
+        
+        denoised_k1_raw = model(x, sigma_from * s_in, **extra_args)
+        scheduled_blur_k1 = blur_sigma * (float(sigma_from) / max_sigma) ** blur_schedule_power if max_sigma > 0 else 0
+        final_blur_k1 = max(scheduled_blur_k1, min_blur_sigma)
+        denoised_k1_blurred = gaussian_blur(denoised_k1_raw, final_blur_k1)
+        
+        d_current = to_d(x, sigma_from, denoised_k1_blurred)
+        if old_denoised_blurred is not None and beta > 0.0:
+            d_old = to_d(x, sigma_from, old_denoised_blurred)
+            k1 = (1 - beta) * d_current + beta * d_old
+        else: k1 = d_current
+        old_denoised_blurred = denoised_k1_blurred
+
+        sigma_down, sigma_up = get_ancestral_step(sigma_from, sigma_to, eta=eta)
+        sigma_mid = (sigma_from + sigma_down) / 2
+        x_mid = x + k1 * (sigma_mid - sigma_from)
+        
+        denoised_k2_raw = model(x_mid, sigma_mid * s_in, **extra_args)
+        scheduled_blur_k2 = blur_sigma * (float(sigma_mid) / max_sigma) ** blur_schedule_power if max_sigma > 0 else 0
+        final_blur_k2 = max(scheduled_blur_k2, min_blur_sigma)
+        denoised_k2_blurred = gaussian_blur(denoised_k2_raw, final_blur_k2)
+        k2 = to_d(x_mid, sigma_mid, denoised_k2_blurred)
+        dt = sigma_down - sigma_from
+        x = x + k2 * dt
+        if sigma_up > 0: x = x + noise_sampler(sigma_from, sigma_to) * s_noise * sigma_up
+        if callback is not None: callback({'x': x, 'i': i, 'sigma': sigmas[i], 'sigma_hat': sigmas[i], 'denoised': denoised_k1_raw})
+        
+    return x
+
 # ---------------------下面这段在modules\sd_samplers_kdiffusion.py对应位置改(我用的forge，别的我不知道)--------------------------------------------
 samplers_k_diffusion = [
     ('DPM++ 2M', 'sample_dpmpp_2m', ['k_dpmpp_2m'], {'scheduler': 'karras'}),
@@ -257,6 +315,7 @@ samplers_k_diffusion = [
     ('Spawner SMEA (beta)','sample_spawner_smea_beta',['k_smea_nai', 'smea_b'],{"uses_ensd": True}),
     ('Spawner SMEA Dyn (beta)','sample_spawner_smea_dyn_beta',['k_smea_dyn_nai', 'smea_dyn_e'],{"uses_ensd": True}),
     ('Spawner SMEA Dyn (beta1)','sample_spawner_smea_dyn_beta1',['k_smea_dyn_nai1', 'smea_dyn_e1'],{"uses_ensd": True}),
+    ('Spawner rk2 smea d blurring', 'sample_rk2_smea_d_blurring', ['rk2_smea_d_blurring'], {}),
 ]
 # 相比原来加了    ('SMEA', 'sample_spawner_smea', ['k_smea'], {"uses_ensd": True}),
     #('SMEA (beta)','sample_spawner_smea_beta',['k_smea_nai', 'smea_b'],{"uses_ensd": True}),
