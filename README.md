@@ -36,6 +36,30 @@ Negative prompt: worst aesthetic,worst quality,old,early,low quality,bad quality
 Steps: 28, Sampler: Spawner SMEA Dyn (beta), Schedule type: Automatic, CFG scale: 4.5, Seed: 114514, Size: 1024x1536, Model: noobaiXLNAIXL_epsilonPred11Version, Clip skip: 2, RNG: CPU, Version: f2.0.1v1.10.1-1.10.1
 ```
 
+## 【2025.5.26】更新了`spawner_rk2_smea_d_clamp`,主要适用于dit架构模型，解决了先前采样器过曝的问题
+
+### 主要特点
+
+模糊矫正机制：通过在每次迭代中应用高斯模糊来平滑输出，防止生成过程中出现突变或不自然的变化。模糊强度会根据当前噪声水平动态调整，并且设定了一个min_blur_sigma值，确保即使在采样的最后阶段也不会完全取消模糊矫正
+
+噪声调度：允许对添加到中间结果中的噪声量进行控制。通过参数eta控制噪声的比例，并使用noise_sampler函数来生成噪声
+
+历史信息利用：引入了一个beta参数，用来决定是否以及如何将前一步的结果与当前步的结果结合，以产生更稳定的更新方向。这有助于平稳过渡并提高生成质量
+
+自适应步长：虽然基于RK2，但该方法还考虑了从一种噪声水平到另一种噪声水平的“祖先步骤”(get_ancestral_step)，使得每一步的大小不是固定的，而是根据当前状态动态调整
+
+### 工作机制
+
+初始化：设置初始条件，包括确定最大噪声水平max_sigma、创建单位张量s_in等。
+
+主循环：遍历所有预定的噪声水平（sigmas），对于每个噪声水平:
+- 首先计算两个中间点（k1, k2），其中k1基于当前噪声水平下的模型预测结果，而k2则是在一个中间状态下再次评估得到
+- 在这两个点之间，应用模糊处理并计算出相应的梯度或更新方向
+- 使用这些信息更新样本x，同时根据需要添加随机噪声
+- 结束条件：当遍历完所有预设的噪声水平后，返回最终生成的样本
+
+这种设计旨在平衡效率与生成质量，逐步细化样本，直到达到所需的清晰度和细节水平。此外，还特别注意避免生成过程中的不稳定现象，如末端突变，通过持续的模糊矫正来保证输出的平滑性和一致性
+
 # 手动改代码方法
 `step 1`: 打开repositories\k-diffusion\k_diffusion\sampling.py(<-这是普通webui，forge的话是k_diffusion\sampling.py，comfyui是comfy\k_diffusion\sampling.py)
 
