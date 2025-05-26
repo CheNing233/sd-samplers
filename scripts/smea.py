@@ -1,6 +1,6 @@
 try:
     import smea
-    from smea import sample_spawner_smea, sample_spawner_smea_beta, sample_spawner_smea_dyn_beta, sample_spawner_smea_dyn_beta1
+    from smea import sample_spawner_smea, sample_spawner_smea_beta, sample_spawner_smea_dyn_beta, sample_spawner_smea_dyn_beta1, sample_spawner_rk2_smea_d_clamp
 
     if smea.BACKEND == "WebUI":
         from modules import scripts, sd_samplers_common, sd_samplers
@@ -20,6 +20,7 @@ try:
                         ("Spawner SMEA (beta)", sample_spawner_smea_beta, ["k_spawner_smea_beta"], {"uses_ensd": True}),
                         ("Spawner SMEA Dyn (beta)", sample_spawner_smea_dyn_beta, ["k_spawner_smea_dyn_beta"], {"uses_ensd": True}),
                         ("Spawner SMEA Dyn (beta1)", sample_spawner_smea_dyn_beta1, ["k_spawner_smea_dyn_beta1"], {"uses_ensd": True}),
+                        ('Spawner rk2 smea d clamp', sample_spawner_rk2_smea_d_clamp, ['spawner_rk2_smea_d_clamp'], {}),
                     ]
                     samplers_data_smea = [
                         sd_samplers_common.SamplerData(label, lambda model, funcname=funcname: KDiffusionSampler(funcname, model), aliases, options)
