@@ -50,7 +50,7 @@ Steps: 28, Sampler: Spawner SMEA Dyn (beta), Schedule type: Automatic, CFG scale
 
 ### 工作机制
 
-初始化：设置初始条件，包括确定最大噪声水平max_sigma、创建单位张量s_in等。
+初始化：设置初始条件，包括确定最大噪声水平max_sigma、创建单位张量s_in等
 
 主循环：遍历所有预定的噪声水平（sigmas），对于每个噪声水平:
 - 首先计算两个中间点（k1, k2），其中k1基于当前噪声水平下的模型预测结果，而k2则是在一个中间状态下再次评估得到
