@@ -290,6 +290,58 @@ def sample_spawner_rk2_smea_d_clamp(model, x, sigmas, extra_args=None, callback=
         
     return x
 
+@torch.no_grad()
+def sample_spawner_smea_dyn_exp(model, x, sigmas,
+                            extra_args=None, callback=None, disable=None,
+                            smea_strength=0.7,
+                            dyn_beta_min=0.2,
+                            dyn_beta_max=0.9,
+                            dyn_beta_scaler=10.0,
+                            eta=1.0,
+                            s_noise=1.0,
+                            noise_sampler=None
+                            ):
+    if not (0.0 <= smea_strength <= 1.0):
+        raise ValueError("'smea_strength' must be between 0.0 and 1.0.")
+
+    extra_args = extra_args or {}
+    noise_sampler = noise_sampler or default_noise_sampler(x)
+    s_in = x.new_ones([x.shape[0]])
+    
+    old_denoised_raw = None
+    
+    from tqdm import trange
+
+    for i in trange(len(sigmas) - 1, disable=disable):
+        sigma_current = sigmas[i]
+        sigma_next_actual = sigmas[i + 1]
+        raw_denoised = model(x, sigmas[i] * s_in, **extra_args)
+
+        effective_x0_hat = raw_denoised
+        if smea_strength > 0.0 and old_denoised_raw is not None and sigma_next_actual < sigma_current:
+            dev = raw_denoised.std(dim=[1,2,3], keepdim=True) + 1e-6
+            old_dev = old_denoised_raw.std(dim=[1,2,3], keepdim=True) + 1e-6
+            mse = torch.mean(((raw_denoised / dev) - (old_denoised_raw / old_dev)) ** 2, dim=[1,2,3])
+            similarity_weight = torch.exp(-mse * dyn_beta_scaler)
+            current_beta = dyn_beta_min + (dyn_beta_max - dyn_beta_min) * similarity_weight
+            
+            final_beta = smea_strength * current_beta
+            effective_x0_hat = (1.0 - final_beta) * raw_denoised + final_beta * old_denoised_raw
+        
+        old_denoised_raw = raw_denoised
+        sigma_down, sigma_up = get_ancestral_step(sigma_current, sigma_next_actual, eta=eta)
+        d = to_d(x, sigma_current, effective_x0_hat)
+        dt = sigma_down - sigma_current
+        x = x + d * dt
+
+        if sigma_up > 0:
+            x = x + noise_sampler(sigma_current, sigma_next_actual) * s_noise * sigma_up
+        
+        if callback is not None:
+            callback({'x': x, 'i': i, 'sigma': sigma_current, 'denoised': effective_x0_hat})
+            
+    return x
+
 # ---------------------下面这段在modules\sd_samplers_kdiffusion.py对应位置改(我用的forge，别的我不知道)--------------------------------------------
 samplers_k_diffusion = [
     ('DPM++ 2M', 'sample_dpmpp_2m', ['k_dpmpp_2m'], {'scheduler': 'karras'}),
