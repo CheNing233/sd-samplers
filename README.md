@@ -36,7 +36,7 @@ Negative prompt: worst aesthetic,worst quality,old,early,low quality,bad quality
 Steps: 28, Sampler: Spawner SMEA Dyn (beta), Schedule type: Automatic, CFG scale: 4.5, Seed: 114514, Size: 1024x1536, Model: noobaiXLNAIXL_epsilonPred11Version, Clip skip: 2, RNG: CPU, Version: f2.0.1v1.10.1-1.10.1
 ```
 
-## 【2025.5.26】更新了`spawner_rk2_smea_d_clamp`，主要适用于dit架构模型，解决了先前采样器过曝的问题，个人感觉搭配ddim_uniform调度器最好，10步就可以获得高质量图像
+## 【2025.5.26】更新了`spawner_rk2_smea_d_clamp`，主要适用于dit架构模型，解决了先前采样器过曝的问题，10步就可以获得高质量图像
 
 ### 主要特点
 
